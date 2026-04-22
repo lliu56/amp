@@ -1,0 +1,61 @@
+{
+  "name": "@lliu56/amp",
+  "version": "0.1.0",
+  "description": "Agent Memory Protocol — open-source CLI for signing, verifying, and installing AI agent memory packs",
+  "license": "MIT",
+  "homepage": "https://github.com/lliu56/amp",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lliu56/amp.git"
+  },
+  "bugs": {
+    "url": "https://github.com/lliu56/amp/issues"
+  },
+  "author": "Li Liu",
+  "keywords": [
+    "amp",
+    "agent-memory-protocol",
+    "ai",
+    "ai-agent",
+    "agent-memory",
+    "claude-code",
+    "cursor",
+    "codex",
+    "memory-pack",
+    "ed25519",
+    "signing",
+    "open-source"
+  ],
+  "main": "dist/index.js",
+  "bin": {
+    "amp": "dist/bin/amp.js"
+  },
+  "files": [
+    "dist",
+    "skills",
+    "spec",
+    "README.md",
+    "LICENSE"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "dev": "tsc -p tsconfig.json --watch",
+    "typecheck": "tsc --noEmit",
+    "prepublishOnly": "npm run build"
+  },
+  "dependencies": {
+    "js-yaml": "^4.1.0",
+    "zod": "^3.25.0"
+  },
+  "devDependencies": {
+    "@types/js-yaml": "^4.0.9",
+    "@types/node": "^22",
+    "typescript": "^5.5.0"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
