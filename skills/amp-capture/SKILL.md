@@ -170,62 +170,48 @@ When still ambiguous after keyword matching: flag for human review. Surface as:
 
 ### Step 3 — Format as AMP primitive
 
+Write primitives in the v0.4 inline-tag format. One primitive per block, separated by blank lines. Only emit a reason line (`> ...`) if the source clearly carries one — do not pad.
+
 **goal:**
-```markdown
----
-type: goal
-force: should
-scope: [org|project|user]
-stability: [permanent|seasonal|tactical]
-source: self
----
-
-[Sentence in one of: "In [context], the goal is to [outcome]." / "Optimize [X] over [Y]." / "Default [stance]: [behavior]."]
-
-**Why:** [source context, 1 sentence]
 ```
+[goal <should|must|may>, <org|project|user>, <permanent|seasonal|tactical>] In [context], the goal is to [outcome].
+  > [source context, 1 sentence — only if clearly present]
+```
+Facets default: `should, project, permanent`.
 
 **claim:**
-```markdown
----
-type: claim
-stability: [permanent|tactical]
-source: self
----
-
-[Subject] is / has [assertion — thesis sentence first]
-
-**Why:** [source context, 1 sentence if relevant]
 ```
+[claim <permanent|tactical>] [Subject] is / has [assertion — thesis sentence first]
+  > [source context, 1 sentence — only if clearly present]
+```
+Facets default: `permanent`.
 
 **directive:**
-```markdown
----
-type: directive
-force: [must|should|may]
-scope: [org|project|session]
-stability: [permanent|seasonal|tactical]
-source: self
----
+```
+[directive <must|should|may>, <org|project|session>, <permanent|seasonal|tactical>] In [context], [always|never] [behavior].
+  > [reason, 1 sentence — only if clearly present]
+```
+or:
+```
+[directive <must|should|may>, <org|project|session>, <permanent|seasonal|tactical>] When [condition], prefer [behavior] over [alternative].
+  > [reason, 1 sentence — only if clearly present]
+```
+Facets default: `should, project, permanent`.
 
-In [context], [always|never] [behavior].
-— OR —
-When [condition], prefer [behavior] over [alternative].
-
-**Why:** [reason, 1 sentence]
+**demonstration (single-line):**
+```
+[demo <positive|negative|mixed>, illustrates: <directive-id>] [Full artifact — one line]
+  > [annotation — only if source carries one]
 ```
 
-**demonstration:**
-```markdown
----
-type: demonstration
-valence: [positive|negative|mixed]
-illustrates: [directive-id]  # optional
-source: self
----
-
-[Full artifact body]
+**demonstration (multi-line):**
 ```
+[demo <positive|negative|mixed>, illustrates: <directive-id>] {
+[Full artifact body — verbatim]
+}
+  > [annotation — only if source carries one]
+```
+`valence` is required for all demonstrations. `illustrates:` is optional.
 
 ### Action-log units
 Drop silently. Exception: if the action-log bullet contains an embedded Li-quote (sentence starting "Li:"), extract the quote as a new unit before dropping the narration.
@@ -249,8 +235,8 @@ Create directory structure:
 ```
 
 Write each capability file as a markdown document with:
-- YAML frontmatter: `type: cluster`, `applies_to: [topic description]`, `primitive_counts: {directive: N, claim: N, goal: N, demonstration: N}`
-- One primitive block per extracted unit, separated by `---`
+- YAML frontmatter: `type: cluster`, `applies_to: [topic description]`, `source: self`, `primitive_counts: {directive: N, claim: N, goal: N, demonstration: N}`
+- One inline-tag primitive block per extracted unit, separated by blank lines
 
 **agents.md format:**
 ```markdown
@@ -276,6 +262,7 @@ Write each capability file as a markdown document with:
   "name": "[pack-name]",
   "version": "0.1.0",
   "layout": "semantic-cluster",
+  "primitive_format": "inline-tag-v0.4",
   "created": "[ISO date]",
   "sources": ["[list of source files]"],
   "capability_files": ["copy-voice.md", "content-strategy.md", "product-context.md", "ops-tools.md", "operating-principles.md"],
@@ -297,14 +284,16 @@ Write each capability file as a markdown document with:
 
 ## Phase 6 — Validation
 
-Check every drafted primitive:
+Check every drafted primitive using the inline-tag parser:
 
-- `goal`: body contains a sentence matching at least one goal pattern
-- `claim`: first 3 lines of body contain a thesis-pattern assertion
-- `directive`: body contains `(context, force, behavior)` or `(condition, preferred, alternative)` triple
-- `demonstration`: has `valence` frontmatter
-- No primitive contains credential values (scan for patterns: `sk-`, `re_`, `phc_`, anything after `=` in key=value lines that looks like a token)
-- No primitive is pure action-log content (check: does the unit contain a verb + object without a behavioral context?)
+- Tag format: line starts with `[<type> ...]` where `<type>` is one of `goal|claim|directive|demonstration|demo`
+- Facet order: positional per type (see v0.4 spec §"The four primitives"). Validator reports: `expected <facet-name> at position <N> for <type>, got <value>` on violation.
+- `goal`: content (after `]`) contains at least one of: `the goal is to`, `optimize`, `default`
+- `claim`: content starts with a noun phrase and contains `is` or `has`
+- `directive`: content matches `(In|When)\s.*(always|never|prefer)` pattern
+- `demonstration`: `valence` facet present (`positive|negative|mixed`); body present (multi-line `{ }` or inline content)
+- No primitive contains credential values: `sk-[A-Za-z0-9]{20,}`, `re_[A-Za-z0-9]{20,}`, `phc_[A-Za-z0-9]{20,}`, `=\s*['"][A-Za-z0-9]{32,}`
+- No primitive is pure action-log content (contains verb + object without behavioral context)
 
 Validation report format:
 ```

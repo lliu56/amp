@@ -139,16 +139,16 @@ my-pack/
     <capability>.md
 ```
 
-Every rule inside a capability file is written as a short sentence typed by linguistic act:
+Every rule inside a capability file is a single inline-tag line. Type and facets in `[ ]`, content after. Optional `> reason` on the next line.
 
-| Primitive | Example |
-|-----------|---------|
-| `goal` | "This pack helps the agent review payment systems with Stripe-scale discipline." |
-| `claim` | "Payment flows with more than 2 redirects lose ~18% conversion." |
-| `directive` | "In any review of a checkout flow, always check for client-side validation bypass." |
-| `demonstration` | "Example — when the function is named `validateCard`, assume it runs on the client unless the file is under `/api/`." |
+| Primitive | Inline-tag example |
+|-----------|-------------------|
+| `goal` | `[goal should, project, permanent] Optimize for virality over polish on every content decision.` |
+| `claim` | `[claim permanent] Payment flows with more than 2 redirects lose ~18% conversion.` |
+| `directive` | `[directive must, org, permanent] In any review of a checkout flow, always check for client-side validation bypass.` |
+| `demonstration` | `[demo positive, illustrates: checkout-rule] { ... }` |
 
-Full spec: [`spec/amp-v0.3-spec.md`](spec/amp-v0.3-spec.md).
+Full spec: [`spec/amp-v0.4-spec.md`](spec/amp-v0.4-spec.md).
 
 ---
 
@@ -225,7 +225,7 @@ MIT — see [LICENSE](LICENSE).
 
 ## Links
 
-- **Spec:** [`spec/amp-v0.3-spec.md`](spec/amp-v0.3-spec.md)
+- **Spec:** [`spec/amp-v0.4-spec.md`](spec/amp-v0.4-spec.md) (v0.3: [`spec/amp-v0.3-spec.md`](spec/amp-v0.3-spec.md), preserved for archival)
 - **Distillation skill:** [`skills/amp-capture/SKILL.md`](skills/amp-capture/SKILL.md)
 - **Registry API contract:** [`spec/mm-integration-api.md`](spec/mm-integration-api.md)
 - **Default registry:** [memorymarket.co](https://memorymarket.co)

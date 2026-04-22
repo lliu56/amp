@@ -1,9 +1,7 @@
-# Agent Memory Protocol — Specification v0.3
+# Agent Memory Protocol — Specification v0.4
 
-> **Status:** SUPERSEDED by [amp-v0.4-spec.md](amp-v0.4-spec.md). Preserved for archival. v0.3 packs continue to install via the `primitive_format` manifest field.
-
-**Status:** locked 2026-04-21 (Cycle 6 output — final assembly from Cycles 1–5)
-**Branch:** `claude/agent-memory-protocol-9QOGb`
+**Status:** locked 2026-04-22 (v0.4 — inline-tag primitive format)
+**Supersedes:** amp-v0.3-spec.md
 
 ---
 
@@ -27,9 +25,17 @@ AMP owns the transfer layer — the pack format, signing, and install contract. 
 
 ---
 
+## What changed in v0.4 (from v0.3)
+
+The per-primitive YAML frontmatter block is replaced with a single inline-tag line. A 100-primitive pack drops from ~85% scaffolding to ~15%. The cluster file's YAML frontmatter (one block at the top of each file) is unchanged. The `source` field is lifted from per-primitive to the cluster frontmatter.
+
+The manifest gains one new field (`primitive_format`) that switches readers between v0.3 and v0.4. v0.3 packs continue to install without change.
+
+---
+
 ## Pack layout
 
-A valid AMP v0.3 pack is a directory with this structure:
+A valid AMP v0.4 pack is a directory with this structure:
 
 ```
 <pack-name>/
@@ -55,6 +61,7 @@ A valid AMP v0.3 pack is a directory with this structure:
   "name": "pack-slug",
   "version": "0.1.0",
   "layout": "semantic-cluster",
+  "primitive_format": "inline-tag-v0.4",
   "created": "YYYY-MM-DD",
   "sources": ["list of source files used during distillation"],
   "capability_files": ["operating-principles.md", "copy-voice.md"],
@@ -73,6 +80,7 @@ A valid AMP v0.3 pack is a directory with this structure:
 ```
 
 **Required fields:** `name`, `layout`, `capability_files`, `agents_file`.
+**`primitive_format`:** `"inline-tag-v0.4"` for new packs. When absent, defaults to `"yaml-frontmatter-v0.3"` so v0.3 packs still verify and install.
 **Signing fields:** `signed` (bool) and `signature` (base64url string). Both empty/false before `mm sign` runs.
 **Name must match:** `^[a-z0-9][a-z0-9-]{0,63}$`
 
@@ -107,7 +115,7 @@ Only include rows for capability files that exist in the pack. `operating-princi
 
 ## Capability files
 
-Each file in `memory/` is a cluster file. Frontmatter declares what's in it. Body is one or more primitive blocks separated by `---`.
+Each file in `memory/` is a cluster file. Frontmatter declares what's in it. Body is one or more inline-tag primitive blocks, separated by blank lines.
 
 **Cluster file frontmatter:**
 
@@ -115,6 +123,7 @@ Each file in `memory/` is a cluster file. Frontmatter declares what's in it. Bod
 ---
 type: cluster
 applies_to: <one-line description of what tasks this file covers>
+source: self
 primitive_counts:
   directive: N
   goal: N
@@ -123,24 +132,36 @@ primitive_counts:
 ---
 ```
 
+`source` is lifted from per-primitive (v0.3) to the cluster level. All primitives in a cluster file share the same source. Valid values: `self` | `imported` | `inferred`.
+
 ---
 
-## The four primitives
+## The four primitives — inline-tag format
+
+### Tag grammar
+
+```
+[<type> <facet1>, <facet2>, <facet3>] <content>
+  > <reason — optional, two-space indent + > marker>
+```
+
+- `<type>` is the first token after `[`. Required. One of: `goal | claim | directive | demonstration | demo` (`demo` is an alias for `demonstration`).
+- `<facetN>` are positional, comma-separated, defined per type below. All are optional unless noted.
+- `<content>` is everything after the closing `]` to end of line (or until `{` opens for multi-line demos).
+- `> <reason>` is an optional continuation line. Two-space indent + `>` marker. Multiple `>` lines allowed and concatenate with single newlines.
+- **Facet order is positional and enforced.** `[directive must, org, permanent]` is valid. `[directive permanent, must, org]` is INVALID. The validator reports: `expected <force> at position 1 for directive, got <permanent>`.
+
+---
 
 ### `goal`
 
-A statement of what to optimize for, an active priority, or an operating principle. Goals are the intent substrate — when directives conflict in application, the goal is the tiebreaker.
+A statement of what to optimize for, an active priority, or an operating principle.
 
-**Frontmatter:**
-```yaml
----
-type: goal
-force: should          # goals inform, rarely mandate
-scope: org|project|user
-stability: permanent|seasonal|tactical
-source: self|imported|inferred
----
+**Tag:**
 ```
+[goal <force>, <scope>, <stability>]
+```
+Facets: `<force>` (default `should`), `<scope>` (`org|project|user`, default `project`), `<stability>` (`permanent|seasonal|tactical`, default `permanent`).
 
 **Sentence patterns (pick one):**
 ```
@@ -149,27 +170,35 @@ Optimize [X] over [Y].
 Default [stance/cadence]: [behavior].
 ```
 
-**Qualifies:** operating principles, active priorities, open bets, stated directions, time-bounded commitments.
+**Example:**
+```
+[goal should, project, permanent] Optimize for virality over polish on every content decision.
+  > Traffic volume is the constraint, not conversion rate.
+```
+
+**Qualifies:** operating principles, active priorities, open bets, stated directions.
 **Does not qualify:** claims dressed as goals, directives dressed as goals, action-log narration.
 
 ---
 
 ### `claim`
 
-A factual assertion about the world, a product, a user, or an organization. Claims are the pack's information substrate.
+A factual assertion about the world, a product, a user, or an organization.
 
-**Frontmatter:**
-```yaml
----
-type: claim
-stability: permanent|tactical
-source: self|imported|inferred
----
+**Tag:**
 ```
+[claim <stability>]
+```
+Facets: `<stability>` (`permanent|tactical`, default `permanent`).
 
 **Sentence pattern:**
 ```
 [Subject] is / has [assertion].
+```
+
+**Example:**
+```
+[claim permanent] Arkzero was founded in 2026 as a one-person AI company.
 ```
 
 **Qualifies:** technical config facts, product positioning, identity/preference, persistent state.
@@ -179,18 +208,13 @@ source: self|imported|inferred
 
 ### `directive`
 
-An instruction for what the consuming agent should or should not do. Directives are the behavioral core — they shape future agent action.
+An instruction for what the consuming agent should or should not do.
 
-**Frontmatter:**
-```yaml
----
-type: directive
-force: must|should|may
-scope: session|project|user|org
-stability: permanent|seasonal|tactical
-source: self|imported|inferred
----
+**Tag:**
 ```
+[directive <force>, <scope>, <stability>]
+```
+Facets: `<force>` (`must|should|may`, default `should`), `<scope>` (`session|project|user|org`, default `project`), `<stability>` (`permanent|seasonal|tactical`, default `permanent`).
 
 **Sentence patterns (pick one):**
 ```
@@ -198,35 +222,54 @@ In [context], [always|never] [behavior].
 When [condition], prefer [behavior] over [alternative].
 ```
 
-**Qualifies:** bans, required procedures, conditional preferences, edit-scope rules, multi-step SOPs.
-**Does not qualify:** claims dressed as instructions, examples (those are demonstrations), goal statements without context+behavior triple.
+**Example:**
+```
+[directive must, org, permanent] In all copy, never use em dashes.
+  > Org-wide ban on AI-cliche patterns.
+```
+
+**Qualifies:** bans, required procedures, conditional preferences, edit-scope rules.
+**Does not qualify:** claims dressed as instructions, examples, goal statements without context+behavior triple.
 
 ---
 
 ### `demonstration`
 
-A whole artifact showing a pattern to match or avoid. Not a rule — an example. The agent uses demonstrations as pattern-matching fuel.
+A whole artifact showing a pattern to match or avoid.
 
-**Frontmatter:**
-```yaml
----
-type: demonstration
-valence: positive|negative|mixed   # required
-illustrates: [directive-id]        # optional
-source: self|imported
----
+**Single-line tag:**
+```
+[demo <valence>, illustrates: <directive-id>] <artifact — one line>
+  > <annotation — optional>
 ```
 
-**Body:** the full artifact (tweet, approved copy, rejected draft, before/after, code snippet). No sentence pattern.
+**Multi-line tag (brace block):**
+```
+[demo <valence>, illustrates: <directive-id>] {
+<full artifact body — verbatim, no parsing inside braces>
+}
+  > <annotation — optional>
+```
 
-**Qualifies:** sample artifacts in a creator's voice, approved one-liners, rejected drafts with annotations, before/after rewrites.
+Facets: `<valence>` (`positive|negative|mixed`, **required**), `illustrates: <id>` (optional, key-value form).
+
+Rules for multi-line brace blocks:
+- Opening `{` MUST be on the same line as the closing `]`.
+- Closing `}` MUST be at column 0.
+- Body inside braces is verbatim — `[`, `]`, `>` characters inside are not parsed.
+- `> annotation` lines come AFTER the closing `}`, indented two spaces.
+
+**Example:**
+```
+[demo negative, illustrates: em-dash-ban] {
+  Original: "We're not just shipping — we're transforming."
+  After rule: "We're shipping a new format."
+}
+  > Em-dash version reads as AI-slop; direct version is concrete.
+```
+
+**Qualifies:** approved one-liners, rejected drafts with annotations, before/after rewrites.
 **Does not qualify:** rules (those are directives), assertions (those are claims), goals.
-
----
-
-## Non-primitive: action-log
-
-Raw work narration — "Ran /social-news-post pipeline," "Committed fix to X," "Deployed Y." These entries are distillation fuel, not pack content. The `/amp-capture` skill drops them silently. Exception: if an action-log bullet contains an embedded Li-quote, extract the quote as a new memory unit before dropping the narration.
 
 ---
 
@@ -236,39 +279,78 @@ Raw work narration — "Ran /social-news-post pipeline," "Committed fix to X," "
 ---
 type: cluster
 applies_to: writing style, voice, copy formatting rules
+source: self
 primitive_counts:
   directive: 2
   goal: 0
   claim: 0
-  demonstration: 0
+  demonstration: 1
 ---
 
----
-type: directive
-force: must
-scope: org
-stability: permanent
-source: self
----
+[directive must, org, permanent] In all written output, never use em dashes.
+  > Org-wide writing ban — em dashes are an AI-cliche pattern.
 
-In all written output, never use em dashes.
+[directive must, org, permanent] In Reddit posts, lead with findings or value, not product description.
+  > Posts that open with product description perform worse than posts leading with data or insight.
 
-**Why:** Org-wide writing ban — em dashes are an AI-cliche pattern.
-
----
-
----
-type: directive
-force: must
-scope: org
-stability: permanent
-source: self
----
-
-In Reddit posts, lead with findings or value, not product description.
-
-**Why:** Posts that open with product description perform worse than posts leading with data or insight.
+[demo negative, illustrates: em-dash-ban] {
+  Original: "We're not just shipping — we're transforming."
+  Approved: "We're shipping a new format."
+}
+  > Show the difference instead of restating the rule.
 ```
+
+---
+
+## Non-primitive: action-log
+
+Raw work narration — "Ran /social-news-post pipeline," "Committed fix to X," "Deployed Y." These entries are distillation fuel, not pack content. The `/amp-capture` skill drops them silently. Exception: if an action-log bullet contains an embedded Li-quote, extract the quote as a new memory unit before dropping the narration.
+
+---
+
+## Parser spec (for the skills' validation phase)
+
+Capability file body parser, line by line:
+
+1. Split into logical blocks. A block is one primitive.
+2. A block starts at a line matching `/^\[(\w+)([^\]]*?)\]\s*(.*)$/`.
+   - Group 1: type token.
+   - Group 2: facet string (may be empty, or start with a space then comma-separated tokens, or contain `key: value` for `illustrates:`).
+   - Group 3: rest of line — content (or `{` if a multi-line demo opens).
+3. If group 3 ends with `{`, consume lines verbatim until a line that is exactly `}` at column 0. The captured body is the demonstration content.
+4. After the content / closing `}`, consume continuation lines matching `/^\s{2}>\s?(.*)$/` and join them into the reason field.
+5. A blank line ends the block.
+
+**Validation rules:**
+
+- `goal` block: content must contain at least one of: `the goal is to`, `optimize`, `default`.
+- `claim` block: content starts with a noun phrase and contains `is` or `has`.
+- `directive` block: content matches `(In|When)\s.*(always|never|prefer)` pattern.
+- `demonstration` block: must have `valence` facet (`positive|negative|mixed`). Body required.
+- No primitive block contains credential-like patterns: `sk-[A-Za-z0-9]{20,}`, `re_[A-Za-z0-9]{20,}`, `phc_[A-Za-z0-9]{20,}`, `=\s*['"][A-Za-z0-9]{32,}`.
+- Facet order is positional per type — validator reports position violation with the message: `expected <facet-name> at position <N> for <type>, got <value>`.
+
+**Validation report format:**
+```
+PASS: [N] primitives valid
+FAIL: [N] primitives failed validation
+  - [unit ID] — REASON: [specific failure]
+WARN: [N] ambiguous units still unresolved — awaiting human review
+```
+
+---
+
+## Migration from v0.3
+
+v0.3 packs in the wild continue to install unchanged. The migration strategy:
+
+- `manifest.json` `primitive_format` field switches the reader.
+  - Absent or `"yaml-frontmatter-v0.3"` → use the v0.3 reader (YAML frontmatter per primitive, blocks separated by `---`).
+  - `"inline-tag-v0.4"` → use the v0.4 reader (inline-tag blocks, separated by blank lines).
+- The CLI does not read primitive content — no changes needed there.
+- The `/amp-unpack` skill reads `primitive_format` from the manifest to pick which parser to use when integrating into the wiki.
+- The `/amp-capture` skill always writes v0.4 from now on. There is no flag to write v0.3.
+- No migration tool. v0.3 packs stay v0.3 forever. New packs are v0.4.
 
 ---
 
@@ -391,7 +473,7 @@ The `/amp-capture` skill runs a credential scan on every extracted unit before w
 
 ## De-duplication (log extraction only)
 
-When extracting directive-candidates from log entries, check each against `raw/feedback_*.md` files. If key nouns + verbs overlap >80%, mark as `DUPLICATE — skip`. The canonical source is the feedback file. Log entries rarely add behavioral information not already in feedback files; they add context and timing.
+When extracting directive-candidates from log entries, check each against `raw/feedback_*.md` files. If key nouns + verbs overlap >80%, mark as `DUPLICATE — skip`. The canonical source is the feedback file.
 
 ---
 

@@ -41,7 +41,7 @@ Scan these locations, in order, for installed AMP pack directories:
 4. `~/.memorymarket/*/manifest.json` (user scope, mm CLI)
 
 For each pack found, read:
-- `manifest.json` — confirm `layout: "semantic-cluster"`, capture `name`, `capability_files`, `signed`, `sources`, and any creator identity field.
+- `manifest.json` — confirm `layout: "semantic-cluster"`, capture `name`, `capability_files`, `signed`, `sources`, and any creator identity field. Also capture `primitive_format` — one of `"inline-tag-v0.4"` or `"yaml-frontmatter-v0.3"`. If absent, default to `"yaml-frontmatter-v0.3"`. This field determines which parser to use in Phase 4.
 - `agents.md` — the routing file, already inlined into the host agent's rules.
 - `memory/<capability>.md` — one file per capability.
 
@@ -120,6 +120,12 @@ Pages use `[[page-slug]]` wikilinks to cross-reference.
 Create `wiki/index.md` with starter sections. Create empty `wiki/log.md`. Create `wiki/pages/` directory.
 
 **Page integration:**
+
+**Parser selection:** read the manifest's `primitive_format` field before processing any capability file:
+- `"inline-tag-v0.4"`: primitives use the inline-tag grammar — each block starts with `[type facets] content`, with optional `  > reason` continuation lines. Blocks are separated by blank lines.
+- `"yaml-frontmatter-v0.3"` (or absent): primitives use the v0.3 grammar — each block is a `---` YAML frontmatter followed by body text, blocks separated by `---`.
+
+The wiki integration content extracted is the same regardless of format (content sentence + reason). Only the extraction pattern differs. Do not sniff the format heuristically — always read `primitive_format` from the manifest first.
 
 For each capability file:
 
