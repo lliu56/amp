@@ -1,5 +1,5 @@
 {
-  "name": "@lliu56/amp",
+  "name": "@arkzero/amp",
   "version": "0.1.0",
   "description": "Agent Memory Protocol — open-source CLI for signing, verifying, and installing AI agent memory packs",
   "license": "MIT",

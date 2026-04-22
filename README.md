@@ -10,7 +10,7 @@ One install. One signed file. Your agent inherits someone else's operating conte
 
 ```bash
 # 1. Install (requires Node 18+)
-npm install -g @lliu56/amp
+npm install -g @arkzero/amp
 
 # 2. Generate your signing keypair (once per machine)
 amp keygen
@@ -61,7 +61,7 @@ AMP is the protocol. The CLI in this repo is the open-source reference implement
 ## Install
 
 ```bash
-npm install -g @lliu56/amp
+npm install -g @arkzero/amp
 ```
 
 Requires Node.js 18 or higher.
