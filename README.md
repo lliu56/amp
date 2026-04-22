@@ -23,9 +23,15 @@ amp verify ./my-pack --public-key ~/.amp/keys/signing.pub
 
 # 5. Install a local pack into your project's agent
 amp install --from-path ./my-pack
+
+# 6. (Optional) Integrate the installed pack into your Karpathy wiki
+#    Run this as a skill from inside Claude Code / Codex / any host agent:
+#    /amp-unpack
 ```
 
 That's it. Your agent's rules file (`CLAUDE.md`, `AGENTS.md`, `.cursor/rules/`, or `.windsurfrules`) now includes the pack's routing block. On the next prompt, the agent uses it.
+
+The optional `/amp-unpack` skill (shipped in `skills/amp-unpack/SKILL.md`) runs from inside a host agent and merges the installed pack into a Karpathy-style wiki at `knowledge-base/wiki/`. If you don't have one, the skill offers to scaffold one. The CLI install alone is enough without this step.
 
 ---
 
@@ -159,9 +165,14 @@ Tested on 79 real memory files across 9 locations during the design cycles. 0% u
 
 ---
 
-## Distillation
+## Skills
 
-AMP ships a Claude Code skill at [`skills/amp-capture/SKILL.md`](skills/amp-capture/SKILL.md) that distills a raw memory folder or wiki into a valid AMP pack. Drop it into your `.claude/skills/` directory, run `/amp-capture`, point it at your source files, and it produces a pack ready to sign.
+AMP ships two Claude Code skills for the ends of the flow that require judgment:
+
+- **[`/amp-capture`](skills/amp-capture/SKILL.md)** — distills a raw memory folder or Karpathy-style wiki into a valid AMP pack. Drop the skill into your `.claude/skills/` directory, run `/amp-capture`, point it at your source files, and it produces a signed-ready pack.
+- **[`/amp-unpack`](skills/amp-unpack/SKILL.md)** — after `amp install`, integrates the installed pack into your Karpathy wiki at `knowledge-base/wiki/`. Scaffolds one if you don't have it. Adds wikilinks, updates the index, logs the integration. Idempotent.
+
+The flow is symmetric: `/amp-capture` takes a wiki → pack, `/amp-unpack` takes a pack → wiki. The CLI commands (`sign`, `verify`, `install`) handle the deterministic plumbing in between.
 
 ---
 
