@@ -291,6 +291,8 @@ Write each capability file as a markdown document with:
 }
 ```
 
+**CRITICAL — `capability_files` format:** each entry is the FILENAME ONLY (e.g. `"copy-voice.md"`), NOT a relative path (`"memory/copy-voice.md"` is WRONG). The installer automatically prepends `memory/`; adding the prefix to the manifest entry produces `memory/memory/copy-voice.md` on install and breaks the pack.
+
 ---
 
 ## Phase 6 — Validation
