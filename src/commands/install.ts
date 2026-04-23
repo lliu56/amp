@@ -1,5 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
+import os from "node:os";
 import crypto from "node:crypto";
 import {
   resolvePackDir,
@@ -120,6 +121,7 @@ function detectAgent(cwd: string): string | null {
   if (fs.existsSync(path.join(cwd, ".cursor"))) return "cursor";
   if (fs.existsSync(path.join(cwd, ".cursorrules"))) return "cursor";
   if (fs.existsSync(path.join(cwd, ".windsurfrules"))) return "windsurf";
+  if (fs.existsSync(path.join(os.homedir(), ".openclaw"))) return "openclaw";
   return null;
 }
 
@@ -134,13 +136,20 @@ function detectAgent(cwd: string): string | null {
 export async function install(options: InstallOptions = {}): Promise<void> {
   if (!options.fromPath) {
     throw new CliError(
-      "Usage: amp install --from-path <pack-dir> [--scope project|user] [--agent claude-code|codex|cursor|windsurf]",
+      "Usage: amp install --from-path <pack-dir> [--scope project|user] [--agent claude-code|codex|cursor|windsurf|openclaw]",
       "MISSING_FROM_PATH"
     );
   }
 
   const cwd = process.cwd();
-  const scope: InstallScope = options.scope ?? "project";
+
+  // Determine agent first — OpenClaw's workspace is home-dir based, so it always installs user scope
+  const agent = options.agent ?? detectAgent(cwd) ?? "claude-code";
+  let scope: InstallScope = options.scope ?? "project";
+  if (agent === "openclaw" && scope === "project") {
+    console.log("Note: OpenClaw uses a home-directory workspace — upgrading to user scope.");
+    scope = "user";
+  }
 
   // Scope guard
   if (scope === "project") {
@@ -176,7 +185,6 @@ export async function install(options: InstallOptions = {}): Promise<void> {
   }
 
   const creator = "local";
-  const agent = options.agent ?? detectAgent(cwd) ?? "claude-code";
   const installDir = resolveInstallDir(scope, cwd);
   const packDir = resolvePackDir(slug, scope, cwd);
 

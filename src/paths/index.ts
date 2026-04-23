@@ -47,6 +47,7 @@ export function resolveBackupPath(slug: string, scope: InstallScope, cwd: string
  * - codex       → AGENTS.md (project) or ~/.agents.md (user)
  * - cursor      → .cursor/rules/amp-<slug>.md (one file per pack, no append needed)
  * - windsurf    → .windsurfrules (project) or ~/.windsurfrules (user)
+ * - openclaw    → ~/.openclaw/workspace/AGENTS.md (always; workspace-based agent)
  * - default     → CLAUDE.md
  */
 export function resolveHostRulesFile(
@@ -55,6 +56,11 @@ export function resolveHostRulesFile(
   cwd: string,
   slug?: string
 ): string {
+  // OpenClaw is workspace-based — always resolves to home-dir workspace regardless of scope
+  if (agent === "openclaw") {
+    return path.join(os.homedir(), ".openclaw", "workspace", "AGENTS.md");
+  }
+
   if (scope === "user") {
     switch (agent) {
       case "codex":

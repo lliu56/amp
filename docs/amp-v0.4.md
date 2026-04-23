@@ -1,17 +1,88 @@
-# Agent Memory Protocol — Specification v0.4
+---
+version: 0.4
+released: 2026-04-22
+status: current
+supersedes: amp-v0.3.md
+---
 
-**Status:** locked 2026-04-22 (v0.4 — inline-tag primitive format)
-**Supersedes:** amp-v0.3-spec.md
+# Agent Memory Protocol — v0.4
+
+Single source of truth for AMP. This document replaces all earlier scattered pitch, spec, and framing docs. Any future version lives in this folder as `amp-v[next].md` with a later `released:` date — highest date wins.
 
 ---
 
-## What AMP is
+## Part 1 — Pitch (why AMP exists)
+
+### One-liner
+
+> "What if you could upload your memory? Okay maybe not yours, but your AI agent's memory?"
+
+### 2026 context
+
+2026 is the year AI agent memory became a first-class thing.
+
+- Anthropic shipped Claude Memory to every account (March 2026).
+- Claude Code got Auto Dream — the agent writes its own notes between sessions.
+- Anthropic's Memory Tool in the API — agents pull memory on demand.
+- Graph memory went from experimental to production. Google's TurboQuant sped it 8x.
+- Research anchors: Mem0's *State of AI Agent Memory 2026*, arXiv *Memory in the Age of AI Agents*.
+- Every lab, every IDE, every framework is racing to build memory.
+
+### The pain
+
+No unified protocol to move memory between people. Goes both ways.
+
+- **Forward.** Your memory is siloed. Vendor-captive. Your Claude memory doesn't move to Cursor. Cursor doesn't move to Codex.
+- **Reverse.** Experts, senior engineers, founders — their memory is valuable. No way to install it. No standard to pull it in.
+
+Code has GitHub. Packages have npm. Songs have Spotify. Agent memory has nothing.
+
+### Why brute force fails (5 attempts)
+
+| # | Attempt | Why it fails |
+|---|---|---|
+| BF1 | "Just upload your memory folder to GitHub" | Raw dump. No curation, no structure, no domain slice. 200 files, half from dead projects, no way to tell current from abandoned. |
+| BF2 | "Just share your CLAUDE.md" (Karpathy, 16.5k stars Jan 2026) | Flat markdown. No structure, no verification, no signing. Manual copy-paste install collides with the buyer's existing config. |
+| BF3 | "Add an ontology — rules, persona, facts, procedures" | Borrowed categories overlap. Two people tag the same line differently. The registry breaks. Is "always use TypeScript" a rule or a procedure? Nobody agrees. |
+| BF4 | "Add a rigid schema with `when:` conditions" | Real memory doesn't work like that. Context is subtle and already in the text. An em-dash ban needs 15 `when:` conditions to cover copy, comments, PRs, decks. |
+| BF5 | "Share the memory openly and trust it" | Prompt injection is now a live ecosystem threat. Stats below. |
+
+**BF5 — the security floor:**
+
+- Snyk ToxicSkills audit: **36%** of 3,984 ClawHub skills scanned contained detectable prompt injection. **1,467** outright malicious payloads. 91% combined prompt injection with traditional malware.
+- Cisco AI Defense: **26%** of 31,000 OpenClaw skills had at least one vulnerability. Nine critical findings in the #1 skill alone.
+- **SOUL.md killer example.** Attackers fragment malicious payloads across OpenClaw's SOUL.md and MEMORY.md. Each line looks benign in isolation. Assembled at runtime, they become an executable instruction chain — time-shifted logic bombs hidden inside memory files. Install a popular skill, a week later a tool call arrives, another benign line, together they form an instruction, your agent runs curl to an attacker server with your env vars in the body. Live in the wild, confirmed by Snyk.
+
+### The actual solution — AMP
+
+First-principled. A piece of memory is linguistically doing one of four things:
+
+- **goal** — intent
+- **claim** — assertion
+- **directive** — instruction
+- **demonstration** — example
+
+Tested on 79 real memory files across 9 locations. **0% unclassifiable.**
+
+- Context lives inside the text. No separate `when:` field.
+- Packs organized by semantic cluster — files named by what the knowledge *is*, not by primitive type.
+- Ed25519 signed. Server-side re-verification. Tampered packs rejected.
+- Open spec, anyone can implement.
+- Install primitive works: `mm install @creator/pack` → **1.8 seconds** to activation.
+
+Example: *"In any copy, never use em dashes."* One sentence. The "any copy" IS the context. No schema needed. Agent parses it, applies it, done.
+
+---
+
+## Part 2 — Spec (how AMP works)
+
+### What AMP is (technical)
 
 AMP (Agent Memory Protocol) is a format for packaging and transferring AI agent memory. A pack is a signed directory of typed memory files that a developer installs into their coding agent with a single command.
 
-**Why it exists:** Each developer's coding agent accumulates hard-won knowledge (behavioral rules, product facts, voice constraints, operating principles). That knowledge is currently locked to one developer's machine. AMP lets creators package and distribute that knowledge to buyers who install it locally, without cloud round-trips during inference.
+AMP owns the **transfer layer** — the pack format, signing, and install contract. The distillation (wiki → pack) and host integration (pack → agent) are adapters on either side.
 
-**Three-phase model:**
+### Three-phase transfer model
 
 ```
 Creator's Karpathy wiki
@@ -21,21 +92,11 @@ AMP pack (signed, structured)
 Buyer's agent (CLAUDE.md managed block + .memorymarket/<slug>/ subtree)
 ```
 
-AMP owns the transfer layer — the pack format, signing, and install contract. The distillation (Karpathy → pack) and host integration (pack → agent) are adapters on either side.
+### What changed from v0.3
 
----
+The per-primitive YAML frontmatter block is replaced with a single inline-tag line. A 100-primitive pack drops from ~85% scaffolding to ~15%. The cluster file's YAML frontmatter (one block at the top of each file) is unchanged. The `source` field is lifted from per-primitive to the cluster frontmatter. The manifest gains one new field (`primitive_format`) that switches readers between v0.3 and v0.4. v0.3 packs continue to install without change.
 
-## What changed in v0.4 (from v0.3)
-
-The per-primitive YAML frontmatter block is replaced with a single inline-tag line. A 100-primitive pack drops from ~85% scaffolding to ~15%. The cluster file's YAML frontmatter (one block at the top of each file) is unchanged. The `source` field is lifted from per-primitive to the cluster frontmatter.
-
-The manifest gains one new field (`primitive_format`) that switches readers between v0.3 and v0.4. v0.3 packs continue to install without change.
-
----
-
-## Pack layout
-
-A valid AMP v0.4 pack is a directory with this structure:
+### Pack layout
 
 ```
 <pack-name>/
@@ -52,20 +113,20 @@ A valid AMP v0.4 pack is a directory with this structure:
 
 `manifest.layout` must be `"semantic-cluster"`. Each file in `memory/` covers one capability domain (what-kind-of-task), not one primitive type. Primitives mix within files.
 
----
-
-## manifest.json
+### manifest.json
 
 ```json
 {
   "name": "pack-slug",
-  "version": "0.1.0",
+  "title": "My Pack Title",
+  "version": { "number": 1 },
   "layout": "semantic-cluster",
   "primitive_format": "inline-tag-v0.4",
   "created": "YYYY-MM-DD",
   "sources": ["list of source files used during distillation"],
-  "capability_files": ["operating-principles.md", "copy-voice.md"],
   "agents_file": "agents.md",
+  "agents": ["claude-code"],
+  "capability_files": ["operating-principles.md", "copy-voice.md"],
   "primitive_counts": {
     "goal": 0,
     "claim": 0,
@@ -79,18 +140,14 @@ A valid AMP v0.4 pack is a directory with this structure:
 }
 ```
 
-**Required fields:** `name`, `layout`, `capability_files`, `agents_file`.
-**`primitive_format`:** `"inline-tag-v0.4"` for new packs. When absent, defaults to `"yaml-frontmatter-v0.3"` so v0.3 packs still verify and install.
-**Signing fields:** `signed` (bool) and `signature` (base64url string). Both empty/false before `mm sign` runs.
-**Name must match:** `^[a-z0-9][a-z0-9-]{0,63}$`
+- **Required fields:** `name`, `title`, `layout`, `capability_files`, `agents_file`, `agents`.
+- **`primitive_format`:** `"inline-tag-v0.4"` for new packs. When absent, defaults to `"yaml-frontmatter-v0.3"` so v0.3 packs still verify and install.
+- **Signing fields:** `signed` (bool) and `signature` (base64url string). Both empty/false before `mm sign` runs.
+- **Name must match:** `^[a-z0-9][a-z0-9-]{0,63}$`
 
----
+### agents.md — the routing table
 
-## agents.md
-
-The routing table. The consuming agent reads this to know which capability files to load for which task type. The MemoryMarket installer inlines this file verbatim into the host rules file (CLAUDE.md / AGENTS.md / etc.) as a managed block.
-
-**Required format:**
+Consuming agent reads this to know which capability files to load for which task type. The installer inlines this file verbatim into the host rules file (CLAUDE.md / AGENTS.md / etc.) as a managed block.
 
 ```markdown
 # AMP Routing — <pack-name>
@@ -109,15 +166,11 @@ The routing table. The consuming agent reads this to know which capability files
 | Reviewing approved examples or tone matching | demonstrations.md |
 ```
 
-Only include rows for capability files that exist in the pack. `operating-principles.md` is always in the Always-load section.
+Only include rows for capability files that exist. `operating-principles.md` is always in Always-load.
 
----
-
-## Capability files
+### Capability files
 
 Each file in `memory/` is a cluster file. Frontmatter declares what's in it. Body is one or more inline-tag primitive blocks, separated by blank lines.
-
-**Cluster file frontmatter:**
 
 ```yaml
 ---
@@ -132,11 +185,11 @@ primitive_counts:
 ---
 ```
 
-`source` is lifted from per-primitive (v0.3) to the cluster level. All primitives in a cluster file share the same source. Valid values: `self` | `imported` | `inferred`.
+`source` is lifted from per-primitive (v0.3) to cluster level. All primitives in a cluster file share the same source. Valid values: `self` | `imported` | `inferred`.
 
 ---
 
-## The four primitives — inline-tag format
+## Part 3 — The four primitives (inline-tag format)
 
 ### Tag grammar
 
@@ -149,26 +202,19 @@ primitive_counts:
 - `<facetN>` are positional, comma-separated, defined per type below. All are optional unless noted.
 - `<content>` is everything after the closing `]` to end of line (or until `{` opens for multi-line demos).
 - `> <reason>` is an optional continuation line. Two-space indent + `>` marker. Multiple `>` lines allowed and concatenate with single newlines.
-- **Facet order is positional and enforced.** `[directive must, org, permanent]` is valid. `[directive permanent, must, org]` is INVALID. The validator reports: `expected <force> at position 1 for directive, got <permanent>`.
-
----
+- **Facet order is positional and enforced.** `[directive must, org, permanent]` is valid. `[directive permanent, must, org]` is INVALID.
 
 ### `goal`
 
 A statement of what to optimize for, an active priority, or an operating principle.
 
-**Tag:**
 ```
 [goal <force>, <scope>, <stability>]
 ```
+
 Facets: `<force>` (default `should`), `<scope>` (`org|project|user`, default `project`), `<stability>` (`permanent|seasonal|tactical`, default `permanent`).
 
-**Sentence patterns (pick one):**
-```
-In [context], the goal is to [outcome].
-Optimize [X] over [Y].
-Default [stance/cadence]: [behavior].
-```
+Sentence patterns (pick one): `In [context], the goal is to [outcome].` / `Optimize [X] over [Y].` / `Default [stance/cadence]: [behavior].`
 
 **Example:**
 ```
@@ -176,51 +222,40 @@ Default [stance/cadence]: [behavior].
   > Traffic volume is the constraint, not conversion rate.
 ```
 
-**Qualifies:** operating principles, active priorities, open bets, stated directions.
-**Does not qualify:** claims dressed as goals, directives dressed as goals, action-log narration.
-
----
+Qualifies: operating principles, active priorities, open bets, stated directions.
+Does not qualify: claims dressed as goals, directives dressed as goals, action-log narration.
 
 ### `claim`
 
 A factual assertion about the world, a product, a user, or an organization.
 
-**Tag:**
 ```
 [claim <stability>]
 ```
+
 Facets: `<stability>` (`permanent|tactical`, default `permanent`).
 
-**Sentence pattern:**
-```
-[Subject] is / has [assertion].
-```
+Sentence pattern: `[Subject] is / has [assertion].`
 
 **Example:**
 ```
 [claim permanent] Arkzero was founded in 2026 as a one-person AI company.
 ```
 
-**Qualifies:** technical config facts, product positioning, identity/preference, persistent state.
-**Does not qualify:** instructions (those are directives), goals, examples (those are demonstrations).
-
----
+Qualifies: technical config facts, product positioning, identity/preference, persistent state.
+Does not qualify: instructions (directives), goals, examples (demonstrations).
 
 ### `directive`
 
 An instruction for what the consuming agent should or should not do.
 
-**Tag:**
 ```
 [directive <force>, <scope>, <stability>]
 ```
+
 Facets: `<force>` (`must|should|may`, default `should`), `<scope>` (`session|project|user|org`, default `project`), `<stability>` (`permanent|seasonal|tactical`, default `permanent`).
 
-**Sentence patterns (pick one):**
-```
-In [context], [always|never] [behavior].
-When [condition], prefer [behavior] over [alternative].
-```
+Sentence patterns (pick one): `In [context], [always|never] [behavior].` / `When [condition], prefer [behavior] over [alternative].`
 
 **Example:**
 ```
@@ -228,22 +263,20 @@ When [condition], prefer [behavior] over [alternative].
   > Org-wide ban on AI-cliche patterns.
 ```
 
-**Qualifies:** bans, required procedures, conditional preferences, edit-scope rules.
-**Does not qualify:** claims dressed as instructions, examples, goal statements without context+behavior triple.
-
----
+Qualifies: bans, required procedures, conditional preferences, edit-scope rules.
+Does not qualify: claims dressed as instructions, examples, goal statements without context+behavior triple.
 
 ### `demonstration`
 
 A whole artifact showing a pattern to match or avoid.
 
-**Single-line tag:**
+**Single-line:**
 ```
 [demo <valence>, illustrates: <directive-id>] <artifact — one line>
   > <annotation — optional>
 ```
 
-**Multi-line tag (brace block):**
+**Multi-line (brace block):**
 ```
 [demo <valence>, illustrates: <directive-id>] {
 <full artifact body — verbatim, no parsing inside braces>
@@ -268,12 +301,10 @@ Rules for multi-line brace blocks:
   > Em-dash version reads as AI-slop; direct version is concrete.
 ```
 
-**Qualifies:** approved one-liners, rejected drafts with annotations, before/after rewrites.
-**Does not qualify:** rules (those are directives), assertions (those are claims), goals.
+Qualifies: approved one-liners, rejected drafts with annotations, before/after rewrites.
+Does not qualify: rules (directives), assertions (claims), goals.
 
----
-
-## Example: minimal valid capability file
+### Minimal valid capability file
 
 ```markdown
 ---
@@ -302,13 +333,13 @@ primitive_counts:
 
 ---
 
-## Non-primitive: action-log
+## Part 4 — Non-primitive: action-log
 
 Raw work narration — "Ran /social-news-post pipeline," "Committed fix to X," "Deployed Y." These entries are distillation fuel, not pack content. The `/amp-capture` skill drops them silently. Exception: if an action-log bullet contains an embedded Li-quote, extract the quote as a new memory unit before dropping the narration.
 
 ---
 
-## Parser spec (for the skills' validation phase)
+## Part 5 — Parser spec
 
 Capability file body parser, line by line:
 
@@ -340,21 +371,7 @@ WARN: [N] ambiguous units still unresolved — awaiting human review
 
 ---
 
-## Migration from v0.3
-
-v0.3 packs in the wild continue to install unchanged. The migration strategy:
-
-- `manifest.json` `primitive_format` field switches the reader.
-  - Absent or `"yaml-frontmatter-v0.3"` → use the v0.3 reader (YAML frontmatter per primitive, blocks separated by `---`).
-  - `"inline-tag-v0.4"` → use the v0.4 reader (inline-tag blocks, separated by blank lines).
-- The CLI does not read primitive content — no changes needed there.
-- The `/amp-unpack` skill reads `primitive_format` from the manifest to pick which parser to use when integrating into the wiki.
-- The `/amp-capture` skill always writes v0.4 from now on. There is no flag to write v0.3.
-- No migration tool. v0.3 packs stay v0.3 forever. New packs are v0.4.
-
----
-
-## Signing
+## Part 6 — Signing
 
 Before distribution, sign the pack with `mm sign`:
 
@@ -382,7 +399,7 @@ const valid = crypto.verify(null, Buffer.from(payload), pubKey, Buffer.from(sign
 
 ---
 
-## Installation
+## Part 7 — Installation
 
 ```bash
 # From MemoryMarket registry (requires auth + signed pack)
@@ -396,11 +413,13 @@ mm install @creator/slug --scope user
 ```
 
 **What install does:**
-1. Validates pack (layout, agents.md, capability files, signed status for registry)
-2. Extracts pack to `.memorymarket/<slug>/` subtree in the project root
-3. Appends managed block to host rules file (CLAUDE.md / AGENTS.md / .windsurfrules)
+1. Validates pack (layout, agents.md, capability files, signed status for registry).
+2. Extracts pack to `.memorymarket/<slug>/` subtree in the project root.
+3. Appends managed block to host rules file (CLAUDE.md / AGENTS.md / .windsurfrules / ~/.openclaw/workspace/AGENTS.md for OpenClaw).
 
-**Managed block format (in CLAUDE.md):**
+Agents that use a home-directory workspace (OpenClaw) always install user-scope. The managed block is written to `~/.openclaw/workspace/AGENTS.md` regardless of the `--scope` flag.
+
+**Managed block format:**
 ```markdown
 <!-- amp:begin @creator/slug -->
 [agents.md content inlined verbatim]
@@ -409,15 +428,9 @@ mm install @creator/slug --scope user
 <!-- amp:end @creator/slug -->
 ```
 
-**Uninstall:**
-```bash
-mm uninstall <slug>
-```
-Removes managed block + deletes `.memorymarket/<slug>/` directory.
+**Uninstall:** `mm uninstall <slug>` — removes managed block + deletes `.memorymarket/<slug>/` directory.
 
----
-
-## Validation rules (installer enforces)
+### Validation rules (installer enforces)
 
 | Gate | Condition | Error |
 |---|---|---|
@@ -430,7 +443,7 @@ Removes managed block + deletes `.memorymarket/<slug>/` directory.
 
 ---
 
-## Credential scanner
+## Part 8 — Credential scanner
 
 The `/amp-capture` skill runs a credential scan on every extracted unit before writing it to the pack. Any unit containing a pattern that looks like a live credential is rejected with an error (not a warning).
 
@@ -445,21 +458,19 @@ The `/amp-capture` skill runs a credential scan on every extracted unit before w
 
 ---
 
-## Distillation shape guide (source → unit boundary)
+## Part 9 — Distillation shape guide (source → unit boundary)
 
 | Source shape | Unit boundary | Notes |
 |---|---|---|
 | `philosophy` | One bolded principle + prose = one unit | Li's Takes section: each topic = one unit |
 | `priorities` | One bullet per list = one unit | Drop "Recently shipped" as action-log |
 | `feedback` | Whole file = one unit | Already atomic |
-| `project` | Whole file = one unit | Exception: project_memorymarket_v3.md → split at sub-section |
+| `project` | Whole file = one unit | Exception: `project_memorymarket_v3.md` → split at sub-section |
 | `reference` | Whole file = one unit | |
 | `log` | One bullet per date-header = one unit | Pre-classify each bullet; drop action-log |
 | `marketing-master` | One section = one unit; "Approved Examples" → one demo per example | |
 
----
-
-## Capability file routing rules (priority order, first match wins)
+### Capability file routing rules (priority order, first match wins)
 
 1. `credential / API key / token / n8n / Resend / PostHog / .env / email address / deploy` → **ops-tools.md**
 2. `em dash / voice / tone / style / format / tagline / draft / slop / banned / pattern / vocabulary / phrasing` → **copy-voice.md**
@@ -469,21 +480,39 @@ The `/amp-capture` skill runs a credential scan on every extracted unit before w
 5. Goal / priority / operating principle → **operating-principles.md**
 6. Approved artifact → **demonstrations.md**
 
----
-
-## De-duplication (log extraction only)
+### De-duplication (log extraction only)
 
 When extracting directive-candidates from log entries, check each against `raw/feedback_*.md` files. If key nouns + verbs overlap >80%, mark as `DUPLICATE — skip`. The canonical source is the feedback file.
 
 ---
 
-## Creating your first pack (quick start)
+## Part 10 — Migration from v0.3
 
-1. **Run `/amp-capture`** with your source files → get a draft pack in `workspace/amp-packs/<name>/`
-2. **Review the Phase 3→4 human review pause** — drop or reclassify any misrouted units
-3. **Check `agents.md`** — routing table must have a row for every task type your buyers will ask
-4. **Generate keypair:** `mm keygen` (once)
-5. **Sign:** `mm sign workspace/amp-packs/<name>`
-6. **Test install:** `mm install --from-path workspace/amp-packs/<name>` in a scratch project
-7. **Verify the agent uses it:** ask the agent to write something that should trigger copy-voice.md rules. Confirm they fire.
-8. **Publish:** `mm publish` (MemoryMarket registry — requires auth)
+v0.3 packs in the wild continue to install unchanged.
+
+- `manifest.json` `primitive_format` field switches the reader.
+  - Absent or `"yaml-frontmatter-v0.3"` → use the v0.3 reader (YAML frontmatter per primitive, blocks separated by `---`).
+  - `"inline-tag-v0.4"` → use the v0.4 reader (inline-tag blocks, separated by blank lines).
+- The CLI does not read primitive content — no changes needed there.
+- The `/amp-unpack` skill reads `primitive_format` from the manifest to pick which parser to use when integrating into the wiki.
+- The `/amp-capture` skill always writes v0.4 from now on. There is no flag to write v0.3.
+- No migration tool. v0.3 packs stay v0.3 forever. New packs are v0.4.
+
+---
+
+## Part 11 — Registries
+
+AMP is registry-agnostic. Any server that implements the integration contract at [`mm-integration-api.md`](mm-integration-api.md) can host, verify, and serve packs.
+
+The default registry is [MemoryMarket](https://memorymarket.co), which adds a public key registry with GitHub + Stripe identity binding, server-side re-scanning and revocation, and discovery / browse / creator payouts.
+
+---
+
+## Links
+
+- **Previous version (archived):** [`amp-v0.3.md`](amp-v0.3.md)
+- **Registry integration contract:** [`mm-integration-api.md`](mm-integration-api.md)
+- **Distillation skill:** [`../skills/amp-capture/SKILL.md`](../skills/amp-capture/SKILL.md)
+- **Integration skill:** [`../skills/amp-unpack/SKILL.md`](../skills/amp-unpack/SKILL.md)
+- **CLI source:** [`../src/`](../src/)
+- **Issues:** https://github.com/lliu56/amp/issues

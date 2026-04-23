@@ -23,7 +23,7 @@ Contributors never publish to npm directly. Only maintainers can tag releases.
 
 ## What we're careful about
 
-Changes to the protocol spec (`spec/amp-v0.3-spec.md`) and the pack format require more discussion. If you have an idea that changes how packs are structured, signed, or consumed, open an issue first — don't send a PR cold.
+Changes to the protocol spec (`docs/amp-v0.4.md` — current; older versions archived in the same folder) and the pack format require more discussion. If you have an idea that changes how packs are structured, signed, or consumed, open an issue first — don't send a PR cold.
 
 ## Dev setup
 

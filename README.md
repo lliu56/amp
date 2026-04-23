@@ -29,7 +29,7 @@ amp install --from-path ./my-pack
 #    /amp-unpack
 ```
 
-That's it. Your agent's rules file (`CLAUDE.md`, `AGENTS.md`, `.cursor/rules/`, or `.windsurfrules`) now includes the pack's routing block. On the next prompt, the agent uses it.
+That's it. Your agent's rules file (`CLAUDE.md`, `AGENTS.md`, `.cursor/rules/`, `.windsurfrules`, or `~/.openclaw/workspace/AGENTS.md`) now includes the pack's routing block. On the next prompt, the agent uses it.
 
 The optional `/amp-unpack` skill (shipped in `skills/amp-unpack/SKILL.md`) runs from inside a host agent and merges the installed pack into a Karpathy-style wiki at `knowledge-base/wiki/`. If you don't have one, the skill offers to scaffold one. The CLI install alone is enough without this step.
 
@@ -106,7 +106,7 @@ amp install --from-path ./my-pack --scope user               # Install globally 
 amp install --from-path ./my-pack --agent claude-code        # Target specific agent
 ```
 
-Supported agents: `claude-code`, `codex`, `cursor`, `windsurf`. Auto-detected from project markers (`CLAUDE.md`, `AGENTS.md`, `.cursor/`, `.windsurfrules`) if `--agent` isn't passed.
+Supported agents: `claude-code`, `codex`, `cursor`, `windsurf`, `openclaw`. Auto-detected from project markers (`CLAUDE.md`, `AGENTS.md`, `.cursor/`, `.windsurfrules`) or `~/.openclaw/` (user home) if `--agent` isn't passed. OpenClaw uses a home-directory workspace — packs always install user-scope and the managed block is written to `~/.openclaw/workspace/AGENTS.md`.
 
 ### `amp inspect <slug>`
 Show metadata and tamper status of an installed pack.
@@ -148,7 +148,7 @@ Every rule inside a capability file is a single inline-tag line. Type and facets
 | `directive` | `[directive must, org, permanent] In any review of a checkout flow, always check for client-side validation bypass.` |
 | `demonstration` | `[demo positive, illustrates: checkout-rule] { ... }` |
 
-Full spec: [`spec/amp-v0.4-spec.md`](spec/amp-v0.4-spec.md).
+Full spec: [`docs/amp-v0.4.md`](docs/amp-v0.4.md).
 
 ---
 
@@ -178,7 +178,7 @@ The flow is symmetric: `/amp-capture` takes a wiki → pack, `/amp-unpack` takes
 
 ## Run your own registry
 
-AMP is registry-agnostic. Any server that implements the integration contract can host, verify, and serve packs. The spec is at [`spec/mm-integration-api.md`](spec/mm-integration-api.md).
+AMP is registry-agnostic. Any server that implements the integration contract can host, verify, and serve packs. The spec is at [`docs/mm-integration-api.md`](docs/mm-integration-api.md).
 
 The default registry most people will use is [MemoryMarket](https://memorymarket.co), which adds:
 
@@ -225,8 +225,9 @@ MIT — see [LICENSE](LICENSE).
 
 ## Links
 
-- **Spec:** [`spec/amp-v0.4-spec.md`](spec/amp-v0.4-spec.md) (v0.3: [`spec/amp-v0.3-spec.md`](spec/amp-v0.3-spec.md), preserved for archival)
+- **Canonical doc (SSoT):** [`docs/amp-v0.4.md`](docs/amp-v0.4.md) — pitch + spec in one place. Older versions live alongside with `released:` frontmatter; highest date is current.
+- **v0.3 (archived):** [`docs/amp-v0.3.md`](docs/amp-v0.3.md) — superseded, preserved for archival.
+- **Registry API contract:** [`docs/mm-integration-api.md`](docs/mm-integration-api.md)
 - **Distillation skill:** [`skills/amp-capture/SKILL.md`](skills/amp-capture/SKILL.md)
-- **Registry API contract:** [`spec/mm-integration-api.md`](spec/mm-integration-api.md)
 - **Default registry:** [memorymarket.co](https://memorymarket.co)
 - **Issues:** [github.com/lliu56/amp/issues](https://github.com/lliu56/amp/issues)

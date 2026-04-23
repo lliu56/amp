@@ -134,7 +134,7 @@ Environment variables:
   AMP_PRIVATE_KEY                  Private key PEM (overrides --key file)
   AMP_PUBLIC_KEY                   Public key PEM (overrides --public-key flag)
 
-Spec:    https://github.com/lliu56/amp/blob/main/spec/amp-v0.3-spec.md
+Spec:    https://github.com/lliu56/amp/blob/main/docs/amp-v0.4.md
 Skill:   https://github.com/lliu56/amp/blob/main/skills/amp-capture/SKILL.md
 License: MIT
 `);

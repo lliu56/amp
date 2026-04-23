@@ -1,9 +1,13 @@
+---
+version: 0.3
+released: 2026-04-21
+status: superseded
+superseded_by: amp-v0.4.md
+---
+
 # Agent Memory Protocol — Specification v0.3
 
-> **Status:** SUPERSEDED by [amp-v0.4-spec.md](amp-v0.4-spec.md). Preserved for archival. v0.3 packs continue to install via the `primitive_format` manifest field.
-
-**Status:** locked 2026-04-21 (Cycle 6 output — final assembly from Cycles 1–5)
-**Branch:** `claude/agent-memory-protocol-9QOGb`
+> **SUPERSEDED** by [amp-v0.4.md](amp-v0.4.md). Preserved for archival. v0.3 packs continue to install via the `primitive_format` manifest field — readers auto-switch when it's absent or set to `"yaml-frontmatter-v0.3"`.
 
 ---
 

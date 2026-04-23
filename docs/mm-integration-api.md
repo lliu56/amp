@@ -19,7 +19,7 @@ Returns download info for a pack. The CLI uses this to get file URLs and verify 
   "pack_id": "uuid or null",
   "slug": "pack-slug",
   "scope": "project | user",
-  "agent": "claude-code | codex | cursor | windsurf"
+  "agent": "claude-code | codex | cursor | windsurf | openclaw"
 }
 ```
 
