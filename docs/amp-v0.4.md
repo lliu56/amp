@@ -375,6 +375,8 @@ WARN: [N] ambiguous units still unresolved — awaiting human review
 
 ## Part 6 — Signing
 
+**About signing keys.** Not API keys. AMP has no server and no auth. `amp keygen` generates an Ed25519 keypair on your own machine. The private key stays with you and signs packs you publish. The public key ships inside the pack so anyone can verify the pack wasn't tampered with. If you only install packs, you never touch either key.
+
 Before distribution, sign the pack with `amp sign`:
 
 ```bash
@@ -517,6 +519,8 @@ amp uninstall my-pack --scope user
 |---|---|
 | `AMP_PRIVATE_KEY` | Private key PEM string — overrides `--key` flag in `sign` |
 | `AMP_PUBLIC_KEY` | Public key PEM string — overrides `--public-key` flag in `verify` |
+
+Both are optional and only relevant when publishing. The default flow (`amp keygen` → `amp sign` → `amp verify --public-key`) works without setting either.
 
 ---
 
