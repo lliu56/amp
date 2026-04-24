@@ -38,9 +38,9 @@ The optional `/amp-unpack` skill (shipped in `skills/amp-unpack/SKILL.md`) runs 
 ## What AMP is
 
 <img width="1453" height="349" alt="image" src="https://github.com/user-attachments/assets/6b0f73e8-3bfa-4182-aa3b-5a3ecdf9c7df" />
+AMP pipeline visualized
 
-
-Every AI agent has three layers:
+##Differences in Model, Skills, Memory
 
 | Layer | Comes from 
 |-------|-----------|
