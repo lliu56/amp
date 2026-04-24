@@ -145,15 +145,6 @@ my-pack/
 
 Every rule inside a capability file is a single inline-tag line. Type and facets in `[ ]`, content after. Optional `> reason` on the next line.
 
-| Primitive | Inline-tag example |
-|-----------|-------------------|
-| `goal` | `[goal should, project, permanent] Optimize for virality over polish on every content decision.` |
-| `claim` | `[claim permanent] Payment flows with more than 2 redirects lose ~18% conversion.` |
-| `directive` | `[directive must, org, permanent] In any review of a checkout flow, always check for client-side validation bypass.` |
-| `demonstration` | `[demo positive, illustrates: checkout-rule] { ... }` |
-
-Full spec: [`docs/amp-v0.4.md`](docs/amp-v0.4.md).
-
 ---
 
 ## The 4 primitives (why these four)
@@ -164,6 +155,15 @@ AMP's taxonomy is first-principled — every memory line is doing one of four th
 - **claim** — what is asserted to be true
 - **directive** — what the agent should do
 - **demonstration** — how it looks in practice
+
+| Primitive | Inline-tag example |
+|-----------|-------------------|
+| `goal` | `[goal should, project, permanent] Optimize for virality over polish on every content decision.` |
+| `claim` | `[claim permanent] Payment flows with more than 2 redirects lose ~18% conversion.` |
+| `directive` | `[directive must, org, permanent] In any review of a checkout flow, always check for client-side validation bypass.` |
+| `demonstration` | `[demo positive, illustrates: checkout-rule] { ... }` |
+
+Full spec: [`docs/amp-v0.4.md`](docs/amp-v0.4.md).
 
 Tested on 79 real memory files across 9 locations during the design cycles. 0% unclassifiable.
 
