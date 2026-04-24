@@ -40,7 +40,7 @@ The optional `/amp-unpack` skill (shipped in `skills/amp-unpack/SKILL.md`) runs 
 
 AMP pipeline visualized
 
-## Differences in Model, Skills, Memory
+## Model, Skills and Memory
 
 | Layer | Comes from 
 |-------|-----------|
