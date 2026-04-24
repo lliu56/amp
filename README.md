@@ -182,7 +182,7 @@ The flow is symmetric: `/amp-capture` takes a wiki → pack, `/amp-unpack` takes
 
 ## Run your own registry
 
-AMP is registry-agnostic. Any server that implements the integration contract can host, verify, and serve packs. The spec is at [`docs/mm-integration-api.md`](docs/mm-integration-api.md).
+AMP is registry-agnostic. Any server that implements the integration contract can host, verify, and serve packs. The spec is at [`docs/mm-amp-integration.md`](docs/mm-amp-integration.md).
 
 The default registry most people will use is [MemoryMarket](https://memorymarket.co), which adds:
 
@@ -231,7 +231,7 @@ MIT — see [LICENSE](LICENSE).
 
 - **Canonical doc (SSoT):** [`docs/amp-v0.4.md`](docs/amp-v0.4.md) — pitch + spec in one place. Older versions live alongside with `released:` frontmatter; highest date is current.
 - **v0.3 (archived):** [`docs/amp-v0.3.md`](docs/amp-v0.3.md) — superseded, preserved for archival.
-- **Registry API contract:** [`docs/mm-integration-api.md`](docs/mm-integration-api.md)
+- **Registry API contract:** [`docs/mm-amp-integration.md`](docs/mm-amp-integration.md)
 - **Distillation skill:** [`skills/amp-capture/SKILL.md`](skills/amp-capture/SKILL.md)
 - **Default registry:** [memorymarket.co](https://memorymarket.co)
 - **Issues:** [github.com/lliu56/amp/issues](https://github.com/lliu56/amp/issues)

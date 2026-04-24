@@ -9,6 +9,8 @@ supersedes: amp-v0.3.md
 
 Single source of truth for AMP. This document replaces all earlier scattered pitch, spec, and framing docs. Any future version lives in this folder as `amp-v[next].md` with a later `released:` date — highest date wins.
 
+> **Repo:** [github.com/lliu56/amp](https://github.com/lliu56/amp) · **Install:** `npm install -g @arkzero/amp` · **CLI binary:** `amp`
+
 ---
 
 ## Part 1 — Pitch (why AMP exists)
@@ -68,7 +70,7 @@ Tested on 79 real memory files across 9 locations. **0% unclassifiable.**
 - Packs organized by semantic cluster — files named by what the knowledge *is*, not by primitive type.
 - Ed25519 signed. Server-side re-verification. Tampered packs rejected.
 - Open spec, anyone can implement.
-- Install primitive works: `mm install @creator/pack` → **1.8 seconds** to activation.
+- Install primitive works: `amp install --from-path ./pack` (or a registry CLI like `mm install @creator/pack` on MemoryMarket) → **1.8 seconds** to activation.
 
 Example: *"In any copy, never use em dashes."* One sentence. The "any copy" IS the context. No schema needed. Agent parses it, applies it, done.
 
@@ -88,8 +90,8 @@ AMP owns the **transfer layer** — the pack format, signing, and install contra
 Creator's Karpathy wiki
   ↓ [/amp-capture skill — distillation]
 AMP pack (signed, structured)
-  ↓ [mm install — transfer layer]
-Buyer's agent (CLAUDE.md managed block + .memorymarket/<slug>/ subtree)
+  ↓ [amp install — transfer layer]
+Buyer's agent (CLAUDE.md managed block + .amp/<slug>/ subtree)
 ```
 
 ### What changed from v0.3
@@ -142,7 +144,7 @@ The per-primitive YAML frontmatter block is replaced with a single inline-tag li
 
 - **Required fields:** `name`, `title`, `layout`, `capability_files`, `agents_file`, `agents`.
 - **`primitive_format`:** `"inline-tag-v0.4"` for new packs. When absent, defaults to `"yaml-frontmatter-v0.3"` so v0.3 packs still verify and install.
-- **Signing fields:** `signed` (bool) and `signature` (base64url string). Both empty/false before `mm sign` runs.
+- **Signing fields:** `signed` (bool) and `signature` (base64url string). Both empty/false before `amp sign` runs.
 - **Name must match:** `^[a-z0-9][a-z0-9-]{0,63}$`
 
 ### agents.md — the routing table
@@ -373,12 +375,12 @@ WARN: [N] ambiguous units still unresolved — awaiting human review
 
 ## Part 6 — Signing
 
-Before distribution, sign the pack with `mm sign`:
+Before distribution, sign the pack with `amp sign`:
 
 ```bash
-mm keygen                          # generate Ed25519 keypair (first time only)
-mm sign <pack-dir>                 # sign → writes signed:true + signature to manifest.json
-mm verify <pack-dir> --public-key <file>  # verify (any machine, no MM infrastructure)
+amp keygen                          # generate Ed25519 keypair (first time only)
+amp sign <pack-dir>                 # sign → writes signed:true + signature to manifest.json
+amp verify <pack-dir> --public-key <file>  # verify (any machine, no MM infrastructure)
 ```
 
 **Signing payload (deterministic):**
@@ -402,19 +404,21 @@ const valid = crypto.verify(null, Buffer.from(payload), pubKey, Buffer.from(sign
 ## Part 7 — Installation
 
 ```bash
-# From MemoryMarket registry (requires auth + signed pack)
-mm install @creator/slug
-
-# From local directory (development, skips auth + signing check)
-mm install --from-path <pack-dir>
+# Install a local AMP pack (reference CLI — local path only)
+amp install --from-path <pack-dir>
 
 # Global (user scope)
-mm install @creator/slug --scope user
+amp install --from-path <pack-dir> --scope user
+
+# Target a specific agent explicitly
+amp install --from-path <pack-dir> --agent claude-code
 ```
+
+**Registry installs** are delegated to registry-specific CLIs. The open-source `amp` CLI installs from local paths only. For the MemoryMarket registry, use the `mm` CLI (`mm install @creator/slug`) — contract specified in [`mm-amp-integration.md`](mm-amp-integration.md).
 
 **What install does:**
 1. Validates pack (layout, agents.md, capability files, signed status for registry).
-2. Extracts pack to `.memorymarket/<slug>/` subtree in the project root.
+2. Extracts pack to `.amp/<slug>/` subtree in the project root.
 3. Appends managed block to host rules file (CLAUDE.md / AGENTS.md / .windsurfrules / ~/.openclaw/workspace/AGENTS.md for OpenClaw).
 
 Agents that use a home-directory workspace (OpenClaw) always install user-scope. The managed block is written to `~/.openclaw/workspace/AGENTS.md` regardless of the `--scope` flag.
@@ -424,11 +428,11 @@ Agents that use a home-directory workspace (OpenClaw) always install user-scope.
 <!-- amp:begin @creator/slug -->
 [agents.md content inlined verbatim]
 
-> Pack files: .memorymarket/slug/memory/
+> Pack files: .amp/slug/memory/
 <!-- amp:end @creator/slug -->
 ```
 
-**Uninstall:** `mm uninstall <slug>` — removes managed block + deletes `.memorymarket/<slug>/` directory.
+**Uninstall:** `amp uninstall <slug>` — removes managed block + deletes `.amp/<slug>/` directory.
 
 ### Validation rules (installer enforces)
 
@@ -443,7 +447,80 @@ Agents that use a home-directory workspace (OpenClaw) always install user-scope.
 
 ---
 
-## Part 8 — Credential scanner
+## Part 8 — CLI reference
+
+All commands are provided by the `amp` binary (`npm install -g @arkzero/amp`, requires Node.js 18+).
+
+### `amp keygen`
+
+Generate an Ed25519 signing keypair. Default output: `~/.amp/keys/signing.key` + `~/.amp/keys/signing.pub`.
+
+```bash
+amp keygen
+amp keygen --out ./my-key.key    # custom path
+amp keygen --force               # overwrite existing key
+```
+
+### `amp sign <pack-dir>`
+
+Sign an AMP pack. Writes `signed: true` and `signature` into `manifest.json`.
+
+```bash
+amp sign ./my-pack
+amp sign ./my-pack --key ./my-key.key
+AMP_PRIVATE_KEY="$(cat ~/.amp/keys/signing.key)" amp sign ./my-pack
+```
+
+### `amp verify <pack-dir>`
+
+Verify a pack's signature. Exits 0 if valid, 1 if invalid or tampered.
+
+```bash
+amp verify ./my-pack --public-key ~/.amp/keys/signing.pub
+amp verify ./my-pack --public-key "-----BEGIN PUBLIC KEY-----\n..."
+AMP_PUBLIC_KEY="$(cat ~/.amp/keys/signing.pub)" amp verify ./my-pack
+```
+
+### `amp install --from-path <pack-dir>`
+
+Install a local AMP pack into the current project's coding agent.
+
+```bash
+amp install --from-path ./my-pack
+amp install --from-path ./my-pack --scope user          # install globally for your user
+amp install --from-path ./my-pack --agent claude-code   # target specific agent
+```
+
+Supported agents: `claude-code`, `codex`, `cursor`, `windsurf`, `openclaw`. Auto-detected from project markers (`CLAUDE.md`, `AGENTS.md`, `.cursor/`, `.windsurfrules`) or `~/.openclaw/` if `--agent` isn't passed. OpenClaw always installs user-scope and writes the managed block to `~/.openclaw/workspace/AGENTS.md`.
+
+### `amp inspect <slug>`
+
+Show metadata and tamper status of an installed pack.
+
+```bash
+amp inspect my-pack
+amp inspect my-pack --scope user
+```
+
+### `amp uninstall <slug>`
+
+Remove an installed pack. Cleans the managed block from the agent's rules file and deletes the pack directory.
+
+```bash
+amp uninstall my-pack
+amp uninstall my-pack --scope user
+```
+
+### Environment variables
+
+| Variable | Purpose |
+|---|---|
+| `AMP_PRIVATE_KEY` | Private key PEM string — overrides `--key` flag in `sign` |
+| `AMP_PUBLIC_KEY` | Public key PEM string — overrides `--public-key` flag in `verify` |
+
+---
+
+## Part 9 — Credential scanner
 
 The `/amp-capture` skill runs a credential scan on every extracted unit before writing it to the pack. Any unit containing a pattern that looks like a live credential is rejected with an error (not a warning).
 
@@ -458,7 +535,7 @@ The `/amp-capture` skill runs a credential scan on every extracted unit before w
 
 ---
 
-## Part 9 — Distillation shape guide (source → unit boundary)
+## Part 10 — Distillation shape guide (source → unit boundary)
 
 | Source shape | Unit boundary | Notes |
 |---|---|---|
@@ -486,7 +563,7 @@ When extracting directive-candidates from log entries, check each against `raw/f
 
 ---
 
-## Part 10 — Migration from v0.3
+## Part 11 — Migration from v0.3
 
 v0.3 packs in the wild continue to install unchanged.
 
@@ -500,9 +577,35 @@ v0.3 packs in the wild continue to install unchanged.
 
 ---
 
-## Part 11 — Registries
+## Part 12 — Skills
 
-AMP is registry-agnostic. Any server that implements the integration contract at [`mm-integration-api.md`](mm-integration-api.md) can host, verify, and serve packs.
+AMP ships two Claude Code skills for the judgment-heavy ends of the flow. Drop either skill file into your `.claude/skills/` directory to activate it.
+
+### `/amp-capture`
+
+Distills a Karpathy-style wiki (`knowledge-base/wiki/`) or raw memory folder into a valid v0.4 pack. Runs from inside a host agent (Claude Code, Codex). Handles all four primitives, routes content to the correct capability file, runs the credential scanner (Part 9) on every extracted unit, and writes v0.4 inline-tag format only.
+
+```
+skills/amp-capture/SKILL.md
+```
+
+**Use when:** you want to publish your agent's memory as a distributable AMP pack.
+
+### `/amp-unpack`
+
+After `amp install`, integrates the installed pack into a Karpathy wiki at `knowledge-base/wiki/`. Reads the routing table from `agents.md`, updates `wiki/index.md`, and adds wikilinks to affected pages. Scaffolds a new wiki if one does not exist. Idempotent — safe to run again after pack updates.
+
+```
+skills/amp-unpack/SKILL.md
+```
+
+**Use when:** you've installed a pack and want to merge its memory units into your own wiki rather than loading them purely through the managed block.
+
+---
+
+## Part 13 — Registries
+
+AMP is registry-agnostic. Any server that implements the integration contract at [`mm-amp-integration.md`](mm-amp-integration.md) can host, verify, and serve packs.
 
 The default registry is [MemoryMarket](https://memorymarket.co), which adds a public key registry with GitHub + Stripe identity binding, server-side re-scanning and revocation, and discovery / browse / creator payouts.
 
@@ -510,9 +613,10 @@ The default registry is [MemoryMarket](https://memorymarket.co), which adds a pu
 
 ## Links
 
+- **GitHub repo:** https://github.com/lliu56/amp
+- **Issues:** https://github.com/lliu56/amp/issues
 - **Previous version (archived):** [`amp-v0.3.md`](amp-v0.3.md)
-- **Registry integration contract:** [`mm-integration-api.md`](mm-integration-api.md)
+- **Registry integration contract:** [`mm-amp-integration.md`](mm-amp-integration.md)
 - **Distillation skill:** [`../skills/amp-capture/SKILL.md`](../skills/amp-capture/SKILL.md)
 - **Integration skill:** [`../skills/amp-unpack/SKILL.md`](../skills/amp-unpack/SKILL.md)
 - **CLI source:** [`../src/`](../src/)
-- **Issues:** https://github.com/lliu56/amp/issues

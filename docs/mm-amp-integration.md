@@ -1,9 +1,9 @@
-# MemoryMarket Integration API — AMP v0.3
+# MemoryMarket — AMP Integration
 
 **Audience:** MemoryMarket product/engineering team wiring AMP into memorymarket.co
 **Status:** locked 2026-04-21 (Cycle 6)
 
-This document specifies what the registry API must provide for the CLI's `mm install @creator/slug` flow to work end-to-end with AMP v0.3 packs.
+This document specifies what the registry API must provide for the MM CLI's `mm install @creator/slug` flow to work end-to-end with AMP packs (v0.3 and v0.4).
 
 ---
 
@@ -68,16 +68,16 @@ Returns download info for a pack. The CLI uses this to get file URLs and verify 
 }
 ```
 
-**Critical for AMP v0.3:**
-- `files[].path` must be the relative path from pack root (e.g. `"memory/copy-voice.md"`, not just `"copy-voice.md"`). The CLI uses this to reconstruct the directory tree under `.memorymarket/<slug>/`.
+**Critical:**
+- `files[].path` must be the relative path from pack root (e.g. `"memory/copy-voice.md"`, not just `"copy-voice.md"`). The MM CLI uses this to reconstruct the directory tree under `.memorymarket/<slug>/`.
 - `manifest` must include `signed: true` and `signature` fields — the CLI validates these after download.
-- `bundle_url` (alternative to `files[]`) is not fully supported in AMP v0.3 CLI — the CLI writes the bundle as a file but does not extract it. Use `files[]` for all AMP packs.
+- `bundle_url` (alternative to `files[]`) is not fully supported — the CLI writes the bundle as a file but does not extract it. Use `files[]` for all AMP packs.
 
 ---
 
 ### POST /api/installs/activate
 
-Called after successful install. No change required for AMP v0.3 — existing contract works.
+Called after successful install. Existing contract works for both AMP v0.3 and v0.4 packs.
 
 **Request:**
 ```json
@@ -101,7 +101,7 @@ Called on uninstall. No change required.
 
 ---
 
-## New requirements for AMP v0.3
+## Requirements
 
 ### 1. Pack validation on upload (server-side)
 
@@ -181,11 +181,14 @@ Response: { "pack": { "id": "uuid", "slug": "...", "title": "..." } }
 
 ## CLI version compatibility matrix
 
-| CLI version | Install layout | Validation | Signing |
-|---|---|---|---|
-| 0.1.x | single `.memorymarket/<slug>.md` | none | none |
-| 0.2.0 | `.memorymarket/<slug>/` subtree | gates 1-5 | gate 6 on registry path |
-| 0.2.1 | same | same | + keygen/sign/verify commands |
+| CLI version | Install layout | Validation | Signing | Pack format |
+|---|---|---|---|---|
+| 0.1.x | single `.memorymarket/<slug>.md` | none | none | — |
+| 0.2.0 | `.memorymarket/<slug>/` subtree | gates 1-5 | gate 6 on registry path | v0.3 (yaml-frontmatter) |
+| 0.2.1 | same | same | + keygen/sign/verify commands | v0.3 (yaml-frontmatter) |
+| 0.2.x+ | same | same | same | v0.4 (inline-tag) |
+
+v0.4 packs use identical install flow — the registry only needs to switch on `primitive_format` in the manifest to know which format to use for any display/parsing it does server-side. The CLI install path is format-agnostic.
 
 The registry should accept `installer_version` from the activate endpoint to track which CLI version buyers are using.
 
