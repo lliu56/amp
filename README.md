@@ -1,4 +1,4 @@
-# amp — Agent Memory Protocol
+# AMP — Agent Memory Protocol
 
 Open-source reference implementation of **AMP**, the protocol for packaging, signing, and installing AI agent memory between people.
 
@@ -37,15 +37,18 @@ The optional `/amp-unpack` skill (shipped in `skills/amp-unpack/SKILL.md`) runs 
 
 ## What AMP is
 
+<img width="1453" height="349" alt="image" src="https://github.com/user-attachments/assets/6b0f73e8-3bfa-4182-aa3b-5a3ecdf9c7df" />
+
+
 Every AI agent has three layers:
 
-| Layer | Comes from | Yours? |
-|-------|-----------|--------|
-| Model | Anthropic, OpenAI, Google | No |
-| Skills | Open protocols, bundled with every agent | No |
-| **Memory** | **You, over months of use** | **Yes** |
+| Layer | Comes from 
+|-------|-----------|
+| Model | Anthropic, OpenAI, Google 
+| Skills | Open protocols, bundled with every agent 
+| **Memory** | **You, over months of use** 
 
-Memory is the only part that's actually yours, and the only part worth transferring between people. Before AMP, there was no standard way to do that. Everyone's memory file lived on one laptop, in one vendor's folder, with no signing, no verification, no taxonomy, no install primitive.
+Before AMP, everyone's memory file lived on one laptop, in one vendor's folder, with no signing, no verification, no taxonomy, no install primitive.
 
 AMP defines:
 
@@ -87,6 +90,7 @@ amp sign ./my-pack
 amp sign ./my-pack --key ./my-key.key
 AMP_PRIVATE_KEY="$(cat ~/.amp/keys/signing.key)" amp sign ./my-pack
 ```
+
 
 ### `amp verify <pack-dir>`
 Verify a pack's signature against a public key. Exits 0 if VALID, 1 if INVALID or tampered.
