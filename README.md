@@ -36,8 +36,8 @@ The optional `/amp-unpack` skill (shipped in `skills/amp-unpack/SKILL.md`) runs 
 ---
 
 ## What is AMP
+<img width="1453" height="281" alt="image" src="https://github.com/user-attachments/assets/b0d39707-5302-4ef4-abcf-3c37e985fd30" />
 
-<img width="1453" height="349" alt="image" src="https://github.com/user-attachments/assets/6b0f73e8-3bfa-4182-aa3b-5a3ecdf9c7df" />
 AMP pipeline visualized
 
 ## Differences in Model, Skills, Memory
