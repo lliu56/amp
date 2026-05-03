@@ -256,17 +256,19 @@ Write each capability file as a markdown document with:
 | Reviewing approved examples or tone matching | demonstrations.md |
 ```
 
-**manifest.json format:**
+**manifest.json format** (`signed` and `signature` start empty/false; `amp sign` flips them in-place after capture):
 ```json
 {
   "name": "[pack-name]",
-  "version": "0.1.0",
+  "title": "[Pack Title]",
+  "version": { "number": 1 },
   "layout": "semantic-cluster",
   "primitive_format": "inline-tag-v0.4",
   "created": "[ISO date]",
   "sources": ["[list of source files]"],
   "capability_files": ["copy-voice.md", "content-strategy.md", "product-context.md", "ops-tools.md", "operating-principles.md"],
   "agents_file": "agents.md",
+  "agents": ["claude-code"],
   "primitive_counts": {
     "goal": N,
     "claim": N,
@@ -274,7 +276,9 @@ Write each capability file as a markdown document with:
     "demonstration": N,
     "dropped_action_log": N,
     "dropped_duplicate": N
-  }
+  },
+  "signed": false,
+  "signature": ""
 }
 ```
 

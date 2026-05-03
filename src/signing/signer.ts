@@ -19,9 +19,13 @@ import crypto from "node:crypto";
 
 export interface AmpManifest {
   name: string;
-  version: string;
+  title?: string;
+  version: string | { number: number; changelog?: string };
   layout: string;
   capability_files?: string[];
+  agents?: string[];
+  agents_file?: string;
+  primitive_format?: string;
   signed?: boolean;
   signature?: string;
   [key: string]: unknown;
