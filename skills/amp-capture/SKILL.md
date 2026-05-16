@@ -170,38 +170,38 @@ When still ambiguous after keyword matching: flag for human review. Surface as:
 
 ### Step 3 — Format as AMP primitive
 
-Write primitives in the v0.4 inline-tag format. One primitive per block, separated by blank lines. Only emit a reason line (`> ...`) if the source clearly carries one — do not pad.
+Write primitives in the v0.4 inline-tag format. One primitive per block, separated by blank lines. Only emit a reason line (`> ...`) if the source clearly carries one — do not pad. When the reason is a citation, use compact form `> [<short-code>]` and add the short code to the file's `sources:` legend block (see Step 3.5). Use `> [<short-code> — verbatim]` ONLY when the primitive text uses the source's exact words.
 
 **goal:**
 ```
 [goal <should|must|may>, <org|project|user>, <permanent|seasonal|tactical>] In [context], the goal is to [outcome].
-  > [source context, 1 sentence — only if clearly present]
+  > [<short-code> — only if source clearly carries a citation]
 ```
 Facets default: `should, project, permanent`.
 
 **claim:**
 ```
 [claim <permanent|tactical>] [Subject] is / has [assertion — thesis sentence first]
-  > [source context, 1 sentence — only if clearly present]
+  > [<short-code> — only if source clearly carries a citation]
 ```
 Facets default: `permanent`.
 
 **directive:**
 ```
 [directive <must|should|may>, <org|project|session>, <permanent|seasonal|tactical>] In [context], [always|never] [behavior].
-  > [reason, 1 sentence — only if clearly present]
+  > [reason, 1 sentence — only if clearly present; use > [<short-code>] if citing a source]
 ```
 or:
 ```
 [directive <must|should|may>, <org|project|session>, <permanent|seasonal|tactical>] When [condition], prefer [behavior] over [alternative].
-  > [reason, 1 sentence — only if clearly present]
+  > [reason, 1 sentence — only if clearly present; use > [<short-code>] if citing a source]
 ```
 Facets default: `should, project, permanent`.
 
 **demonstration (single-line):**
 ```
 [demo <positive|negative|mixed>, illustrates: <directive-id>] [Full artifact — one line]
-  > [annotation — only if source carries one]
+  > [annotation — only if source carries one; use > [<short-code>] if citing a source]
 ```
 
 **demonstration (multi-line):**
@@ -209,9 +209,26 @@ Facets default: `should, project, permanent`.
 [demo <positive|negative|mixed>, illustrates: <directive-id>] {
 [Full artifact body — verbatim]
 }
-  > [annotation — only if source carries one]
+  > [annotation — only if source carries one; use > [<short-code>] if citing a source]
 ```
 `valence` is required for all demonstrations. `illustrates:` is optional.
+
+### Step 3.5 — Build citation legend block
+
+After writing all primitives for a cluster file, collect every short code used in `> [...]` reason lines. If any exist, emit a `sources:` legend block at the very top of the file, immediately after the YAML frontmatter:
+
+```
+sources:
+  Lex 252: Lex Fridman Podcast #252 — Elon Musk: SpaceX, Mars, Tesla Autopilot
+    https://www.youtube.com/watch?v=DxREm3s1scA
+  Starbase Tour Pt1: Everyday Astronaut SpaceX Starbase Tour Part 1
+```
+
+Rules:
+- One entry per short code, `<short-code>: <full title>` on the first line.
+- URL is optional on an indented second line.
+- If no citation reason lines were emitted in the file, omit the legend block entirely.
+- Short-code naming: human-readable abbreviation — `Lex 252`, `Tesla Q4 2023`, `Jobs Stanford 2005`. Prefer source name + identifier over opaque slugs.
 
 ### Action-log units
 Drop silently. Exception: if the action-log bullet contains an embedded Li-quote (sentence starting "Li:"), extract the quote as a new unit before dropping the narration.

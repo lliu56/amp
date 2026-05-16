@@ -122,7 +122,7 @@ Create `wiki/index.md` with starter sections. Create empty `wiki/log.md`. Create
 **Page integration:**
 
 **Parser selection:** read the manifest's `primitive_format` field before processing any capability file:
-- `"inline-tag-v0.4"`: primitives use the inline-tag grammar — each block starts with `[type facets] content`, with optional `  > reason` continuation lines. Blocks are separated by blank lines.
+- `"inline-tag-v0.4"`: primitives use the inline-tag grammar — each block starts with `[type facets] content`, with optional `  > reason` continuation lines. Blocks are separated by blank lines. Cluster files may contain an optional `sources:` legend block immediately after the YAML frontmatter; this block starts with `sources:` on its own line and ends at the first blank line before any `[type` primitive. **Skip the legend block silently** — it is not a primitive and must not be treated as one.
 - `"yaml-frontmatter-v0.3"` (or absent): primitives use the v0.3 grammar — each block is a `---` YAML frontmatter followed by body text, blocks separated by `---`.
 
 The wiki integration content extracted is the same regardless of format (content sentence + reason). Only the extraction pattern differs. Do not sniff the format heuristically — always read `primitive_format` from the manifest first.

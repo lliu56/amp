@@ -145,7 +145,7 @@ my-pack/
     <capability>.md
 ```
 
-Every rule inside a capability file is a single inline-tag line. Type and facets in `[ ]`, content after. Optional `> reason` on the next line.
+Every rule inside a capability file is a single inline-tag line. Type and facets in `[ ]`, content after. Optional `> reason` on the next line. When the reason is a source citation, use compact form `> [short-code]` with a `sources:` legend block at the top of the file — see [`docs/amp-v0.4.md`](docs/amp-v0.4.md) for the full spec.
 
 ---
 

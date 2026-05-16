@@ -189,6 +189,21 @@ primitive_counts:
 
 `source` is lifted from per-primitive (v0.3) to cluster level. All primitives in a cluster file share the same source. Valid values: `self` | `imported` | `inferred`.
 
+### Citation legend block
+
+When a cluster file contains primitives whose reason lines cite specific sources, declare those sources once at the top of the file using an optional `sources:` legend block, placed immediately after the YAML frontmatter and before the first primitive block:
+
+```
+sources:
+  <short-code>: <full source title>
+    <url — optional, indented one level>
+  <short-code>: <full source title>
+```
+
+Short-code examples: `Lex 252`, `Starbase Tour Pt1`, `Tesla Q4 2023`.
+
+Readers MUST NOT error if the block is absent — it is optional and back-compat with all existing packs.
+
 ---
 
 ## Part 3 — The four primitives (inline-tag format)
@@ -204,6 +219,7 @@ primitive_counts:
 - `<facetN>` are positional, comma-separated, defined per type below. All are optional unless noted.
 - `<content>` is everything after the closing `]` to end of line (or until `{` opens for multi-line demos).
 - `> <reason>` is an optional continuation line. Two-space indent + `>` marker. Multiple `>` lines allowed and concatenate with single newlines.
+- **When the reason is a source citation, use compact form:** `> [<short-code>]`, where the short code resolves via the file's `sources:` legend block. Use `> [<short-code> — verbatim]` only when the primitive text uses the source's exact words.
 - **Facet order is positional and enforced.** `[directive must, org, permanent]` is valid. `[directive permanent, must, org]` is INVALID.
 
 ### `goal`
